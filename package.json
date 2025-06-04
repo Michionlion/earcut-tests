@@ -1,0 +1,11 @@
+{
+  "name": "earcut-tests",
+  "version": "1.0.0",
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "cesium": "^1.130.0",
+    "earcut": "^3.0.1"
+  }
+}
