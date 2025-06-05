@@ -12,11 +12,16 @@ if (require.main === module) {
     let triFeatures = [];
     if (method === 'earcut') {
       // use Earcut directly
-      const { default: earcut } = await import('earcut');
+      const { default: earcut, deviation } = await import('earcut');
       const feat = raw.features[0];
       const ring = feat.geometry.coordinates[0];
       const vertices = ring.reduce((arr, pt) => (arr.push(pt[0], pt[1]), arr), []);
+      console.log('Direct earcut input vertices:', vertices);
+      console.log('Direct earcut holes: []');
       const indices = earcut(vertices, [], 2);
+      // compute deviation for earcut triangulation
+      const err = deviation(vertices, [], 2, indices);
+      console.log(`earcut error: ${err.toFixed(3)}`);
       for (let i = 0; i < indices.length; i += 3) {
         const [i0, i1, i2] = indices.slice(i, i + 3);
         const p0 = [vertices[2 * i0], vertices[2 * i0 + 1]];
@@ -29,8 +34,20 @@ if (require.main === module) {
         triFeatures.push({ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [coords] } });
       }
     } else if (method === 'cesium') {
-      // load Cesium and use its triangulation
-      const { GeoJsonDataSource, PolygonGeometry, VertexFormat, Cartesian3, Math: CesiumMath, Ellipsoid } = await import('cesium');
+      // load GeoJSON and geometry classes from Cesium
+      // attempt to load a local Cesium build if available, else fallback to installed package
+      let cesiumModulePath = 'cesium';
+      try {
+        // assume a local clone in ./local-cesium/Source
+        const localPath = path.resolve(__dirname, 'local-cesium', 'Source', 'Cesium.js');
+        // check if the local path exists
+        fs.accessSync(localPath);
+        cesiumModulePath = localPath;
+        console.log('Using local Cesium from', localPath);
+      } catch (e) {
+        console.log('Using installed Cesium package');
+      }
+      const { GeoJsonDataSource, PolygonGeometry, VertexFormat, Cartesian3, Math: CesiumMath, Ellipsoid } = await import(cesiumModulePath);
       const dataSource = await GeoJsonDataSource.load(raw);
       const entity = dataSource.entities.values.find(e => e.polygon);
       const hierarchy = entity.polygon.hierarchy.getValue();

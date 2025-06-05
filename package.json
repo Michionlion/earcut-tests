@@ -4,6 +4,10 @@
   "author": "",
   "license": "ISC",
   "description": "",
+  "scripts": {
+    "update-cesium": "cd local-cesium && git pull || git clone https://github.com/CesiumGS/cesium.git local-cesium",
+    "build-cesium": "cd local-cesium && npm install && npm run build"
+  },
   "dependencies": {
     "cesium": "^1.130.0",
     "earcut": "^3.0.1"
